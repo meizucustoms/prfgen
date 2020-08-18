@@ -1,0 +1,52 @@
+#!/bin/bash 
+#
+# proprietary-files.txt generator with generating sha1sum
+#
+#####################  SETTINGS  #####################
+OUTPUT_FILE="proprietary-files.txt"
+DT_DEVICE="device/meizu/m1721"
+DT_VENDOR="vendor/meizu/m1721"
+VENDOR_MODULES=false
+######################################################
+
+if [ "$1" = "--module_list" ] | [ -f "$2" ]; then
+    VENDOR_MODULES=true
+    VENDOR_MODULES_LIST_FILE="$2"
+fi
+ismodule() {
+    endtext="$(cat $VENDOR_MODULES_LIST_FILE)"
+    VENDOR_MODULE_FILES=()
+    while IFS= read -r line; do
+        VENDOR_MODULE_FILES+=("$line")
+    done <<<$endtext
+
+    for i in ${!VENDOR_MODULE_FILES[@]}; do
+        if [ "$1" = "${VENDOR_MODULE_FILES[$i]}" ]; then
+            echo "true"
+            break
+        fi
+    done
+}
+echo -ne "Generating...             \r"
+j=0
+endtext="$(cd $DT_VENDOR/proprietary && find * -type f)"
+VENDOR_FILES=()
+while IFS= read -r line; do
+    VENDOR_FILES+=("$line")
+done <<<$endtext
+
+for i in ${!VENDOR_FILES[@]}; do
+    if [ "$VENDOR_MODULES" = "true" ] | [ "$(ismodule ${VENDOR_FILES[$i]})" = "true" ]; then
+        echo "-${VENDOR_FILES[$i]}|$(cd $DT_VENDOR/proprietary && sha1sum ${VENDOR_FILES[$i]} | sed --expression "s@  ${VENDOR_FILES[$i]}@@g")" >> $OUTPUT_FILE
+        vtype=M
+    else
+        echo "${VENDOR_FILES[$i]}|$(cd $DT_VENDOR/proprietary && sha1sum ${VENDOR_FILES[$i]} | sed --expression "s@  ${VENDOR_FILES[$i]}@@g")" >> $OUTPUT_FILE
+        vtype=F
+    fi
+    ((pos++))
+    curPer="$(awk -va=$pos -vb=${#VENDOR_FILES[@]} 'BEGIN{printf("%.1f\n",a / (b / 100))}')%"
+    echo -ne "[$(expr $i + 1)/${#VENDOR_FILES[@]}] $curPer $vtype           \r"
+done
+echo
+
+cp -f $OUTPUT_FILE $DT_DEVICE/$OUTPUT_FILE
