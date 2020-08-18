@@ -4,7 +4,8 @@ Generate proprietary-files.txt with SHA1SUM and modules easy
 ## Setup
 ```
 $ git clone https://github.com/MeizuCustoms/prfgen.git prfgen
-$ cp prfgen/prfgen bin/prfgen
+# NOTE: next steps are needed only if you have ~/bin directory
+$ cp prfgen/prfgen ~/bin/prfgen
 $ rm -rf prfgen
 ```
 Then, open ~/bin/prfgen with your editor and change ```DT_VENDOR``` and ```DT_DEVICE``` variables to your device tree paths.
